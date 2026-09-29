@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DIGI Legacy Vault - Waitlist</title>
+  <!-- IT103 (Sept 17, 2026) - Restyled to approximate the DLV Canva
+       brand (gold/cream/dark, Georgia serif, top-bar strip), matching
+       the --gold/--cream/--dark/--border/--radius/--shadow custom
+       properties already used in upload_test.html, so a visitor
+       clicking Join Waitlist from Canva does not land on a
+       visibly different, unbranded page. Also adds the threshold-
+       gated momentum message (getWaitlistDisplay(), IT103) above the form. -->
+  <!-- GitHub Pages version (dlv-waitlist) - IT115. Same page as GAS waitlist.html, but talks to the
+       GAS backend with fetch() instead of google.script.run, so there is no Google 'created by an
+       Apps Script user' banner.
+       IT115 (Sept 28, 2026) - Bonus tiers (#1-100 FREE 10GB, #101-200 FREE 5GB), real position number
+       after sign-up, 'Only N spots left!' popup from #81 / #181, offer disappears after #200,
+       'on launch day' wording (launch date comes from the Settings sheet). -->
+  <style>
+    :root {
+      --gold:#7a5c2e;
+      --gold-light:#c9a84c;
+      --gold-bg:#f5f0e8;
+      --cream:#faf7f2;
+      --dark:#1a1108;
+      --border:#c8b99a;
+      --btn-green:#2d5a27;
+      --radius:8px;
+      --shadow:0 2px 10px rgba(0,0,0,.10);
+    }
+    html, body {
+      margin: 0; padding: 0;
+      font-family: Georgia, serif;
+      background: var(--cream);
+      color: var(--dark);
+    }
+    .top-bar {
+      background: var(--dark);
+      color: #ffffff;
+      padding: .6rem 1.25rem;
+      font-size: .78rem;
+      letter-spacing: .04em;
+      text-align: center;
+    }
+    .wrap {
+      display: flex;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem 1.75rem;
+    }
+    .wordmark {
+      text-align: center;
+      font-size: .78rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: bold;
+      margin-bottom: .4rem;
+    }
+    h2 {
+      color: var(--dark);
+      text-align: center;
+      margin: 0 0 .3rem;
+      font-size: 1.4rem;
+      letter-spacing: .02em;
+    }
+    p.sub {
+      color: var(--dark);
+      font-size: .88rem;
+      text-align: center;
+      margin: 0 0 1.4rem;
+      opacity: .85;
+    }
+    #momentum {
+      background: var(--gold-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--dark);
+      font-size: .82rem;
+      font-weight: bold;
+      text-align: center;
+      padding: .55rem .75rem;
+      margin-bottom: 1.3rem;
+      display: none;
+    }
+    #first100Meter {
+      background: var(--gold-bg);
+      border: 1px solid var(--gold-light);
+      border-radius: var(--radius);
+      color: var(--gold);
+      font-size: .82rem;
+      font-weight: bold;
+      text-align: center;
+      padding: .55rem .75rem;
+      margin-bottom: 1.3rem;
+      display: none;
+    }
+    label {
+      display: block; font-weight: bold; color: var(--dark);
+      margin: 1rem 0 .35rem; font-size: .85rem;
+    }
+    input[type=text], input[type=email], select {
+      width: 100%; padding: 10px; border-radius: 6px;
+      border: 1px solid var(--border); box-sizing: border-box;
+      font-size: 15px; font-family: Georgia, serif;
+    }
+    button {
+      width: 100%; margin-top: 1.6rem; padding: 12px;
+      background: var(--btn-green); color: #ffffff; font-weight: bold;
+      font-size: 1rem; border: none; border-radius: var(--radius);
+      cursor: pointer; letter-spacing: .03em;
+    }
+    button:disabled { opacity: .6; cursor: default; }
+    #status { margin-top: 1rem; font-size: .85rem; text-align: center; }
+    #spotsPopup { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; align-items:center; justify-content:center; }
+    #spotsPopupBox { background:#fff; border:2px solid var(--gold-light); border-radius:12px; max-width:320px; width:86%; padding:1.4rem; text-align:center; box-shadow:var(--shadow); }
+    #spotsPopupMsg { font-size:1.15rem; font-weight:bold; color:var(--gold); margin-bottom:1rem; }
+    #spotsPopupBox button { margin-top:0; width:auto; padding:10px 22px; }
+    #status.error { color: #a02b2b; font-weight: bold; }
+    #status.success { color: var(--btn-green); font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">Secure &middot; Systemized &middot; Organized for Trustee Access</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="wordmark">Digi Legacy Vault</div>
+      <h2>Join the Waitlist</h2>
+      <p class="sub">Be the first to know when DIGI Legacy Vault opens for full launch.</p>
+      <div id="momentum"></div>
+      <div id="first100Meter"></div>
+      <form id="waitlistForm">
+        <label>Full Name</label>
+        <input type="text" id="name" required>
+        <label>Email Address</label>
+        <input type="email" id="email" required>
+            <label>Gender <span style="font-weight:normal; color:#777;">(optional)</span></label>
+            <select id="gender">
+              <option value="">Select...</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+            <label>Age Range <span style="font-weight:normal; color:#777;">(optional)</span></label>
+            <select id="ageRange">
+              <option value="">Select...</option>
+              <option value="21-35">21-35</option>
+              <option value="36-55">36-55</option>
+              <option value="56+">56+</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+        <button type="submit" id="submitBtn">Join the Waitlist</button>
+      </form>
+      <div id="status"></div>
+      <div style="text-align:center;font-size:.66rem;color:#7a5c2e;font-weight:bold;margin-top:1rem;">digilegacyvault.com &middot; IT115</div>
+    </div>
+  </div>
+  <div id="spotsPopup"><div id="spotsPopupBox"><div id="spotsPopupMsg"></div><button type="button" id="spotsPopupClose">Join now</button></div></div>
+  <script>
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxGG5z60Ce0ubFFwasaKqfTbPb8uyb4JDuaYSbeePrZt1q8vBdKSjclL6OQMNEaSytr9A/exec';
+
+    fetch(GAS_URL + '?action=first100Status&betaKey=DLV2026Beta-Xq9Rz3Km', { cache: 'no-store' })  // betaKey: every GET must carry it (same public key as the Canva links)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data) return;
+        if (data.display && data.display.message) {
+          var m = document.getElementById("momentum");
+          m.textContent = data.display.message;
+          m.style.display = "block";
+        }
+        if (data.showCounter) {
+          var el = document.getElementById("first100Meter");
+          el.textContent = data.offerLine || data.message;
+          el.style.display = "block";
+        }
+        if (data.showPopup && data.popupMessage) {
+          document.getElementById("spotsPopupMsg").textContent = data.popupMessage;
+          document.getElementById("spotsPopup").style.display = "flex";
+        }
+      })
+      .catch(function() { /* decorative; fail silently */ });
+
+    document.getElementById("spotsPopupClose").addEventListener("click", function() {
+      document.getElementById("spotsPopup").style.display = "none";
+      document.getElementById("name").focus();
+    });
+
+    function dlvJoinedMessage_(data) {
+      var when = data.launchDisplay || "on launch day";
+      if (data.bonusTier === "10GB") {
+        return "Congratulations! You're #" + data.position + " of the first 100 \u2014 you qualify for FREE 10GB bonus storage when you subscribe " + when + ".";
+      }
+      if (data.bonusTier === "5GB") {
+        return "Congratulations! You're #" + data.position + " \u2014 one of the next 100 \u2014 you qualify for FREE 5GB bonus storage when you subscribe " + when + ".";
+      }
+      return data.message;
+    }
+
+    document.getElementById("waitlistForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      var btn = document.getElementById("submitBtn");
+      var status = document.getElementById("status");
+      var name = document.getElementById("name").value.trim();
+      var email = document.getElementById("email").value.trim();
+      var gender = document.getElementById("gender").value;
+      var ageRange = document.getElementById("ageRange").value;
+      if (!name || !email) { return; }
+      btn.disabled = true;
+      btn.textContent = "Joining...";
+      status.className = "";
+      status.textContent = "";
+      fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'submitWaitlist', name: name, email: email, gender: gender, ageRange: ageRange })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.success) {
+          status.className = "success";
+          status.textContent = data.already ? (data.message + (data.bonusTier ? " (You're #" + data.position + " \u2014 FREE " + data.bonusTier + " bonus reserved.)" : "")) : dlvJoinedMessage_(data);
+          btn.textContent = "You are In!";
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Join the Waitlist";
+          status.className = "error";
+          status.textContent = (data && data.message) || "Something went wrong. Please try again.";
+        }
+      })
+      .catch(function() {
+        btn.disabled = false;
+        btn.textContent = "Join the Waitlist";
+        status.className = "error";
+        status.textContent = "Something went wrong. Please try again.";
+      });
+    });
+  </script>
+</body>
+</html>
