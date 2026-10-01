@@ -11,7 +11,7 @@
        clicking Join Waitlist from Canva does not land on a
        visibly different, unbranded page. Also adds the threshold-
        gated momentum message (getWaitlistDisplay(), IT103) above the form. -->
-  <!-- GitHub Pages version (dlv-waitlist) - IT115. Same page as GAS waitlist.html, but talks to the
+  <!-- GitHub Pages version (dlv-waitlist) - IT115 (+IT119b back button). Same page as GAS waitlist.html, but talks to the
        GAS backend with fetch() instead of google.script.run, so there is no Google 'created by an
        Apps Script user' banner.
        IT115 (Sept 28, 2026) - Bonus tiers (#1-100 FREE 10GB, #101-200 FREE 5GB), real position number
@@ -162,11 +162,21 @@
         <button type="submit" id="submitBtn">Join the Waitlist</button>
       </form>
       <div id="status"></div>
-      <div style="text-align:center;font-size:.66rem;color:#7a5c2e;font-weight:bold;margin-top:1rem;">digilegacyvault.com &middot; IT115</div>
+      <button type="button" id="backToDlvBtn" onclick="dlvBackToPages()" style="display:block;width:100%;margin-top:.9rem;padding:.7rem;background:#ffffff;color:#7a5c2e;border:2px solid #d2a22b;border-radius:8px;font-weight:bold;font-size:clamp(.78rem,3.6vw,.95rem);white-space:nowrap;cursor:pointer;">&larr; Back to previous page (Keep Exploring!)</button>
+      <div style="text-align:center;font-size:.66rem;color:#7a5c2e;font-weight:bold;margin-top:1rem;">digilegacyvault.com &middot; IT119b</div>
     </div>
   </div>
   <div id="spotsPopup"><div id="spotsPopupBox"><div id="spotsPopupMsg"></div><button type="button" id="spotsPopupClose">Join now</button></div></div>
   <script>
+    // IT119b (Oct 1, 2026) - "Back to DLV pages": returns the visitor to the Canva page they came from.
+    // Same tab -> history.back(); opened as a new tab -> close it (Canva tab is still open behind);
+    // if neither works -> go to digilegacyvault.com.
+    function dlvBackToPages() {
+      var cameFromDlv = /digilegacyvault|canva/i.test(document.referrer || '');
+      if (window.history.length > 1 && (cameFromDlv || !document.referrer)) { window.history.back(); return; }
+      try { window.close(); } catch (e) {}
+      setTimeout(function () { window.location.href = 'https://digilegacyvault.com'; }, 400);
+    }
     var GAS_URL = 'https://script.google.com/macros/s/AKfycbxGG5z60Ce0ubFFwasaKqfTbPb8uyb4JDuaYSbeePrZt1q8vBdKSjclL6OQMNEaSytr9A/exec';
 
     fetch(GAS_URL + '?action=first100Status&betaKey=DLV2026Beta-Xq9Rz3Km', { cache: 'no-store' })  // betaKey: every GET must carry it (same public key as the Canva links)
