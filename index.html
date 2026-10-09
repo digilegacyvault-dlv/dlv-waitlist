@@ -179,7 +179,7 @@
     }
     var GAS_URL = 'https://script.google.com/macros/s/AKfycbxGG5z60Ce0ubFFwasaKqfTbPb8uyb4JDuaYSbeePrZt1q8vBdKSjclL6OQMNEaSytr9A/exec';
 
-    fetch(GAS_URL + '?action=first100Status&betaKey=DLV2026Beta-Xq9Rz3Km', { cache: 'no-store' })  // betaKey: every GET must carry it (same public key as the Canva links)
+    fetch(GAS_URL + '?action=first100Status', { cache: 'no-store' })  // IT121: no Beta key needed (route is public); was: betaKey on every GET (same public key as the Canva links)
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data) return;
